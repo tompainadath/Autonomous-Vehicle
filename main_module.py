@@ -37,22 +37,14 @@ def getLaneCurve(img, display):
 
    ### step 2
    hT, wT, c = img.shape
-   #points = [[102, 80], [378, 80], [20, 214], [460, 214]]
    points = utils.valTrackbars()
-   #print(points)
    imgWarp = utils.warpImg(imgThres, points, wT,hT)
    imgWarpPoints = utils.drawPoints(imgCopy, points)
-   #cv2.imshow('Thres', imgThres)
-   #cv2.imshow('Warp', imgWarp)
-   #cv2.imshow('Warp Points', imgWarpPoints)
-   #cv2.waitKey()
 
    ### step 3
    midPoint, imgHist =  utils.getHistogram(imgWarp, display=True, minPer=0.5, region=4)
    curveAveragePoint, imgHist = utils.getHistogram(imgWarp, display=True, minPer=0.9)
    curveRaw = curveAveragePoint-midPoint
-   #print(basePoint-midPoint)
-   #cv2.imshow('Histogram', imgHist)
 
    ### step 4
    curveList.append(curveRaw)
@@ -87,14 +79,6 @@ def getLaneCurve(img, display):
    elif display == 1:
        cv2.imshow('Resutlt', imgResult)
 
-   ## Normalization
-   """
-   curve = curve/100
-   if curve>1:
-       curve == 1
-   elif curve<1:
-       curve == -1
-"""
    #--- Define Tag
    id_to_find  = 0
    marker_size  = 4 #- [cm]
@@ -115,10 +99,6 @@ def getLaneCurve(img, display):
    camera_matrix   = np.load(calib_path+'camera_matrix.npy')
    camera_distortion   = np.load(calib_path+'camera_distortion.npy')
 
-   #camera_matrix = [[1.82080234e+03,0.00000000e+00,8.80346890e+02],[0.00000000e+00,1.79566527e+03,4.65804969e+02],[0.00000000e+00,0.00000000e+00,1.00000000e+00]]
-   #camera_distortion = [0.39704808,-0.21906382,-0.02195053,-0.03884537,-2.44176437]
-
-
    #--- 180 deg rotation matrix around the x axis
    R_flip  = np.zeros((3,3), dtype=np.float32)
    R_flip[0,0] = 1.0
@@ -128,11 +108,6 @@ def getLaneCurve(img, display):
    #--- Define the aruco dictionary
    aruco_dict  = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
    parameters  = aruco.DetectorParameters_create()
-
-
-   #-- Read the camera frame
-   #ret, frame = img2.read()
-
 
    #-- Convert in gray scale
    gray    = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY) #-- remember, OpenCV stores color images in Blue, Green, Red
@@ -150,9 +125,7 @@ def getLaneCurve(img, display):
        start_time = time.process_time()
        end_time = time.process_time()
        elapsed_time = end_time - start_time
-       # distance = printout()#Insert distance codes here
        distance = round(distance, 20)
-       #print(distance)
 
        v_f = distance  # Vehicle velocity coefficient x Distance * need code for measuring distance *
        exp = math.exp(-lamda * elapsed_time)
@@ -188,23 +161,17 @@ def getLaneCurve(img, display):
         print('STOP LEFT WHEEL!!!')
         r.ChangeDutyCycle(12)
         l.ChangeDutyCycle(15)
-		#time.sleep(.25)
    else:
         r.ChangeDutyCycle(20)
 
    if (curve > 0):
         print('STOP RIGHT WHEEL!!!')
         l.ChangeDutyCycle(0)
-
-		#time.sleep(.25)
    else:
         l.ChangeDutyCycle(20)
-        #time.sleep(.01)
-   #return curve
 
 if __name__ == '__main__':
    cap = cv2.VideoCapture(0)
-   #cap = cv2.VideoCapture('vid1.mp4')
    intialTrackBarVals = [102,80,20,214]
    utils.initializeTrackbars(intialTrackBarVals)
    frameCounter = 0
@@ -214,9 +181,6 @@ if __name__ == '__main__':
            cap.set(cv2.CAP_PROP_POP_FRAMES, 0)
            frameCounter = 0
        success, img = cap.read()
-       #img = cv2.resize(img, (480, 240))
        img = cv2.flip(img,-1)
        getLaneCurve(img, display = 1)
-       #print(curve)
-       #cv2.imshow('vid', img)
        cv2.waitKey(1)
