@@ -44,7 +44,7 @@ def getLaneCurve(img, display):
    hT, wT, c = img.shape  #get image width and height (channels not used)
    points = utils.valTrackbars()  #get lane reference points from current trackbar(valTrackbars() is a function we created to place points on four lane edges)
    imgWarp = utils.warpImg(imgThres, points, wT,hT)  #get warped frame by inputting thresholded frame, lane reference points, width and height
-   imgWarpPoints = utils.drawPoints(imgCopy, points)
+   imgWarpPoints = utils.drawPoints(imgCopy, points)  #draw 
 
    #-- step 3: 
    midPoint, imgHist =  utils.getHistogram(imgWarp, display=True, minPer=0.5, region=4)
