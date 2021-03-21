@@ -1,49 +1,52 @@
-import cv2.aruco as aruco
-import cv2
-import numpy as np
-import utils
-import time
-import os
-import RPi.GPIO as GPIO
-import sys, time, math
+
+import cv2  #import opencv library
+import cv2.aruco as aruco  #import aruco marker library
+import numpy as np  #import numpy library
+import RPi.GPIO as GPIO  #import module to control GPIOs on raspberry pi
+import sys, time, os, math  #import system, time, operating system and math modules
+import utils  #import utils module we created for image processing
 
 #-- Setup GPIO pins
 GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BOARD)  # use board numbering
-RW_PIN = 18;  # assign pin number where LW
+GPIO.setmode(GPIO.BOARD)  #use board numbering
+RW_PIN = 18;  #assign pin number where LW
 LW_PIN = 13;
 RW_ENA = 16;
 LW_ENA = 11;
-GPIO.setup(RW_PIN,GPIO.OUT) # set right wheel PWM pin as output
-GPIO.setup(RW_ENA,GPIO.OUT) # set right wheel enable pin as output
-GPIO.output(RW_ENA, 1)  # enable right wheel
-GPIO.setup(LW_PIN,GPIO.OUT) # set left wheel PWM pin as output
-GPIO.setup(LW_ENA,GPIO.OUT) # set left wheel enable pin as output
-GPIO.output(LW_ENA, 1)  # enable left wheel
+GPIO.setup(RW_PIN,GPIO.OUT) #set right wheel PWM pin as output
+GPIO.setup(RW_ENA,GPIO.OUT) #set right wheel enable pin as output
+GPIO.output(RW_ENA, 1)  #enable right wheel
+GPIO.setup(LW_PIN,GPIO.OUT) #set left wheel PWM pin as output
+GPIO.setup(LW_ENA,GPIO.OUT) #set left wheel enable pin as output
+GPIO.output(LW_ENA, 1)  #enable left wheel
 
-#initialize PWM
-r = GPIO.PWM(RW_PIN,50) # arguments are pin and frequency
-r.start(0) # argument is initial duty cycle, it should be 0
-l = GPIO.PWM(LW_PIN,50) # arguments are pin and frequency
-l.start(0) # argument is initial duty cycle, it should be 0
+#-- initialize PWM
+r = GPIO.PWM(RW_PIN,50) #initialize right wheel pin with arguments pin and frequency
+r.start(0) #start right wheel PWM with initial duty cycle as 0
+l = GPIO.PWM(LW_PIN,50) #initialize right wheel pin with arguments pin and frequency
+l.start(0) #start left wheel PWM with initial duty cycle as 0
 
-curveList = []  #
-avgVal = 10
+curveList = []  #create an empty array to store the curve values
+avgVal = 10  #assign a value of 10 to be used to detect overflow
+
+#-- Function to get the curve value
+#-- Inputs: image(video input frame by frame), display selection (0 - no display, 1 - only resulting image with curve value, 2 - images at different steps stacked)
+#-- Output: a signed integer curve value, a display of choice
 def getLaneCurve(img, display):
-   img = cv2.resize(img, (480, 240))
-   img2 = cv2.resize(img, (1280, 720))
-   imgCopy = img.copy()
+   img = cv2.resize(img, (1280, 720))  #resize the frames to the same size used for calibration
+   imgCopy = img.copy()  # 
    imgResult = img.copy()
-   ### step1
-   imgThres = utils.thresholding(img)
+   
+   #-- step 1: thresholding frames
+   imgThres = utils.thresholding(img)  #input original image frames to thresholding function in utils module
 
-   ### step 2
-   hT, wT, c = img.shape
-   points = utils.valTrackbars()
-   imgWarp = utils.warpImg(imgThres, points, wT,hT)
+   #-- step 2: warping frames
+   hT, wT, c = img.shape  #get image width and height (channels not used)
+   points = utils.valTrackbars()  #get lane reference points from current trackbar(valTrackbars() is a function we created to place points on four lane edges)
+   imgWarp = utils.warpImg(imgThres, points, wT,hT)  #get warped frame by inputting thresholded frame, lane reference points, width and height
    imgWarpPoints = utils.drawPoints(imgCopy, points)
 
-   ### step 3
+   #-- step 3: 
    midPoint, imgHist =  utils.getHistogram(imgWarp, display=True, minPer=0.5, region=4)
    curveAveragePoint, imgHist = utils.getHistogram(imgWarp, display=True, minPer=0.9)
    curveRaw = curveAveragePoint-midPoint
@@ -82,7 +85,7 @@ def getLaneCurve(img, display):
        cv2.imshow('Resutlt', imgResult)
 
    #--- Define Tag
-   id_to_find  = 0
+   id_to_find  = 0  
    marker_size  = 4 #- [cm]
 
 
