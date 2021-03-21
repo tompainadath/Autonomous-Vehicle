@@ -1,4 +1,4 @@
-mport cv2.aruco as aruco
+import cv2.aruco as aruco
 import cv2
 import numpy as np
 import utils
@@ -6,26 +6,28 @@ import time
 import os
 import RPi.GPIO as GPIO
 import sys, time, math
+
+#-- Setup GPIO pins
 GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BOARD)
-RW_PIN = 18;
+GPIO.setmode(GPIO.BOARD)  # use board numbering
+RW_PIN = 18;  # assign pin number where LW
 LW_PIN = 13;
 RW_ENA = 16;
 LW_ENA = 11;
-GPIO.setup(RW_PIN,GPIO.OUT) # Right Wheel
-GPIO.setup(RW_ENA,GPIO.OUT) # Right Wheel
-GPIO.output(RW_ENA, 1)
-GPIO.setup(LW_PIN,GPIO.OUT) # Left Wheel
-GPIO.setup(LW_ENA,GPIO.OUT) # Left Wheel
-GPIO.output(LW_ENA, 1)
+GPIO.setup(RW_PIN,GPIO.OUT) # set right wheel PWM pin as output
+GPIO.setup(RW_ENA,GPIO.OUT) # set right wheel enable pin as output
+GPIO.output(RW_ENA, 1)  # enable right wheel
+GPIO.setup(LW_PIN,GPIO.OUT) # set left wheel PWM pin as output
+GPIO.setup(LW_ENA,GPIO.OUT) # set left wheel enable pin as output
+GPIO.output(LW_ENA, 1)  # enable left wheel
 
 #initialize PWM
-r = GPIO.PWM(RW_PIN,50) # Arguments are pin and frequency
-r.start(0) # Argument is initial duty cycle, it should be 0
-l = GPIO.PWM(LW_PIN,50) # Arguments are pin and frequency
-l.start(0) # Argument is initial duty cycle, it should be 0
+r = GPIO.PWM(RW_PIN,50) # arguments are pin and frequency
+r.start(0) # argument is initial duty cycle, it should be 0
+l = GPIO.PWM(LW_PIN,50) # arguments are pin and frequency
+l.start(0) # argument is initial duty cycle, it should be 0
 
-curveList = []
+curveList = []  #
 avgVal = 10
 def getLaneCurve(img, display):
    img = cv2.resize(img, (480, 240))
