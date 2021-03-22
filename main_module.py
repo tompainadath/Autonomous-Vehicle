@@ -1,4 +1,3 @@
-
 import cv2  #import opencv library
 import cv2.aruco as aruco  #import aruco marker library
 import numpy as np  #import numpy library
@@ -85,22 +84,13 @@ def getLaneCurve(img, display):
        cv2.imshow('Resutlt', imgResult)
 
    #--- Define Tag
-   id_to_find  = 0  
-   marker_size  = 4 #- [cm]
-
-
-   def isRotationMatrix(R):
-       Rt = np.transpose(R)
-       shouldBeIdentity = np.dot(Rt, R)
-       I = np.identity(3, dtype=R.dtype)
-       n = np.linalg.norm(I - shouldBeIdentity)
-       return n < 1e-6
-
-
+   id_to_find  = 0  #id of the aruco marker to be found is 0
+   marker_size  = 4 #marker size in centimeters is 4
 
    #--- Get the camera calibration path
    calib_path  = "/home/pi/mu_code/SeniorDesign/Aruco_pose_est/"
 
+   #-- Load camera matrix and camera distortion
    camera_matrix   = np.load(calib_path+'camera_matrix.npy')
    camera_distortion   = np.load(calib_path+'camera_distortion.npy')
 
@@ -115,65 +105,47 @@ def getLaneCurve(img, display):
    parameters  = aruco.DetectorParameters_create()
 
    #-- Convert in gray scale
-   gray    = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY) #-- remember, OpenCV stores color images in Blue, Green, Red
+   gray    = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY) #remember, OpenCV stores color images in Blue, Green, Red
 
    #-- Find all the aruco markers in the image
-   corners, ids, rejected = aruco.detectMarkers(image=gray, dictionary=aruco_dict, parameters=parameters)#, cameraMatrix=camera_matrix, distCoeff=camera_distortion)
+   corners, ids, rejected = aruco.detectMarkers(image=gray, dictionary=aruco_dict, parameters=parameters)  #, cameraMatrix=camera_matrix, distCoeff=camera_distortion)
 
+   #-- If an aruco marker is found check if it is a marker with id 0
    if ids is not None and ids[0] == id_to_find:
-       ret = aruco.estimatePoseSingleMarkers(corners, marker_size, camera_matrix, camera_distortion)
+       ret = aruco.estimatePoseSingleMarkers(corners, marker_size, camera_matrix, camera_distortion)  #
        rvec, tvec = ret[0][0,0,:], ret[1][0,0,:]
        distance = tvec[2]
-       v_f = 0
-       v_t = 0
-       lamda = 1
-       start_time = time.process_time()
-       end_time = time.process_time()
-       elapsed_time = end_time - start_time
-       distance = round(distance, 20)
+       current_velocity = 0  #initial velocity
+       distance = round(distance, 2)
 
-       v_f = distance  # Vehicle velocity coefficient x Distance * need code for measuring distance *
-       exp = math.exp(-lamda * elapsed_time)
-       v_t = (v_f - v_t / (1 + exp))
-       if v_t > 20:  #  Need to define max duty cycle for specific vehicle
-           v_t = 20  # *Max duty cycle for specific vehicle*
-           print('v_t_1', v_t)
-           r.ChangeDutyCycle(v_t)
-           l.ChangeDutyCycle(v_t)
-       elif v_t < 5:
-           v_t = 0
-           r.ChangeDutyCycle(0)
-           l.ChangeDutyCycle(0)
-           print('v_t_2', v_t)
+       if distance < 1:
+         current_velocity_right = 0
+         current_velocity_left = 0
+       else if curve < 0:
+         current_velocity_right = distance * .8
+         current_velocity_left = (distance * .8) + curve
+       else if curve > 0:
+         current_velocity_right = distance * .8 + curve 
+         current_velocity_left = distance * .8
        else:
-           print('v_t_3', v_t)
-           r.ChangeDutyCycle(v_t)
-           l.ChangeDutyCycle(v_t)
-           if v_t > v_f:
-               exp = math.exp(lamda * elapsed_time)
-               v_t = (v_t - v_f / (1 + exp))
-               print('v_t_4', v_t)
-               if (v_t < 0):
-                   print('v_t_5', v_t)
-                   r.ChangeDutyCycle(0)
-                   l.ChangeDutyCycle(0)
-               else:
-                   print('v_t_6', v_t)
-                   r.ChangeDutyCycle(v_t)
-                   l.ChangeDutyCycle(v_t)
-       time.sleep(.01)
-   if (curve < -15):
-        print('STOP LEFT WHEEL!!!')
+         current_velocity_right = distance * .8
+         current_velocity_left = distance * .8  
+  
+       r.ChangeDutyCycle(current_velocity_right)
+       l.ChangeDutyCycle(current_velocity_left)
+
+   else if (curve < 0):
+        print('SLOW LEFT WHEEL!!!')
         r.ChangeDutyCycle(12)
         l.ChangeDutyCycle(15)
+   else if (curve > 0):
+        print('SLOW RIGHT WHEEL!!!')
+        r.ChangeDutyCycle(15)
+        l.ChangeDutyCycle(12)
    else:
         r.ChangeDutyCycle(20)
-
-   if (curve > 0):
-        print('STOP RIGHT WHEEL!!!')
-        l.ChangeDutyCycle(0)
-   else:
         l.ChangeDutyCycle(20)
+
 
 if __name__ == '__main__':
    cap = cv2.VideoCapture(0)
