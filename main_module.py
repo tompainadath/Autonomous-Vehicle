@@ -136,12 +136,12 @@ def getLaneCurve(img, display):
 
    else if (curve < 0):
         print('SLOW LEFT WHEEL!!!')
-        r.ChangeDutyCycle(12)
-        l.ChangeDutyCycle(15)
-   else if (curve > 0):
-        print('SLOW RIGHT WHEEL!!!')
         r.ChangeDutyCycle(15)
         l.ChangeDutyCycle(12)
+   else if (curve > 0):
+        print('SLOW RIGHT WHEEL!!!')
+        r.ChangeDutyCycle(12)
+        l.ChangeDutyCycle(15)
    else:
         r.ChangeDutyCycle(20)
         l.ChangeDutyCycle(20)
